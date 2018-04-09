@@ -19,7 +19,7 @@
     "CarWebApi": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "api/values",
+      "launchUrl": "api/car",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },

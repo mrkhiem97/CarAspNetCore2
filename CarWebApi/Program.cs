@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
+
 namespace CarWebApi
 {
     public class Program
@@ -17,9 +18,21 @@ namespace CarWebApi
             BuildWebHost(args).Run();
         }
 
-        public static IWebHost BuildWebHost(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
+        public static IWebHost BuildWebHost(string[] args)
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddCommandLine(args)
+                .Build();
+
+            var host = new WebHostBuilder()
+                .UseKestrel()
+                .UseContentRoot(Directory.GetCurrentDirectory())
+                .UseConfiguration(configuration)
+                .UseIISIntegration()
                 .UseStartup<Startup>()
                 .Build();
+
+            return host;
+        }
     }
 }

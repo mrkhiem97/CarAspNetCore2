@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  carwebapi:
+    image: carwebapi
+    networks:
+       - overlay    
+    build:
+      context: .
+      dockerfile: CarWebApi/Dockerfile
+    container_name: container-car-web-api
+    ports:
+      - "5000:80"
+      
+networks:
+  overlay:
