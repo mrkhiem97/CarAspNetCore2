@@ -11,13 +11,13 @@ using System.Threading.Tasks;
 using System.Globalization;
 using System.Text;
 
-namespace CarWebApi.HttpHelper
+namespace CarWebApi.HttpHelper.HttpFileUploader
 {
     public static class FileStreamingHelper
     {
         private static readonly FormOptions _defaultFormOptions = new FormOptions();
 
-        public static async Task<FormValueProvider> StreamFile(this HttpRequest request, Stream targetStream)
+        public static async Task<FormValueProvider> StreamFile(this HttpRequest request, LocalStreamStorage streamStorage)
         {
             if (!MultipartRequestHelper.IsMultipartContentType(request.ContentType))
             {
@@ -44,7 +44,10 @@ namespace CarWebApi.HttpHelper
                 {
                     if (MultipartRequestHelper.HasFileContentDisposition(contentDisposition))
                     {
+                        var targetStream = streamStorage.GetLoalStream(HeaderUtilities.RemoveQuotes(contentDisposition.FileName).Value);
                         await section.Body.CopyToAsync(targetStream);
+                        // await targetStream.FlushAsync();
+                        targetStream.Close();
                     }
                     else if (MultipartRequestHelper.HasFormDataContentDisposition(contentDisposition))
                     {

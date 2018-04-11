@@ -5,9 +5,9 @@ using System.Linq;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using CarWebApi.AspNetCoreAttribute;
-using CarWebApi.HttpHelper;
+using CarWebApi.HttpHelper.HttpContent;
+using CarWebApi.HttpHelper.HttpFileUploader;
 using CarWebApi.ViewModel;
-using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -63,28 +63,28 @@ namespace CarWebApi.Controllers
         {
         }
 
-        [HttpPost("Sample2")]
-        public JObject PostAlbumJObject([FromBody]JObject jAlbum)
+        [HttpPost("PostDynamicJson")]
+        public JObject PostDynamicJsonObject([FromBody]JObject jCarModel)
         {
             // dynamic input from inbound JSON
-            dynamic album = jAlbum;
+            dynamic carModel = jCarModel;
 
             // create a new JSON object to write out
-            dynamic newAlbum = new JObject();
+            dynamic newCarModel = new JObject();
 
             // Create properties on the new instance
             // with values from the first
-            newAlbum.AlbumName = album.AlbumName + " New";
-            newAlbum.NewProperty = "something new";
-            newAlbum.Songs = new JArray();
+            newCarModel.ModelId = carModel.ModelId + " New";
+            newCarModel.ModelName = "something new";
+            newCarModel.Tags = new JArray();
 
-            foreach (dynamic song in album.Songs)
+            foreach (dynamic tag in carModel.Tags)
             {
-                song.SongName = song.SongName + " New";
-                newAlbum.Songs.Add(song);
+                tag.TagName = tag.TagName + " New";
+                newCarModel.Tags.Add(tag);
             }
 
-            return newAlbum;
+            return newCarModel;
         }
 
         /// <summary>
@@ -156,12 +156,9 @@ namespace CarWebApi.Controllers
         public async Task<IActionResult> UploadLargeFile()
         {
             FormValueProvider formModel;
-            var filename = hostingEnv.WebRootPath + $@"\myfile.temp";
-            using (var stream = System.IO.File.Create(filename))
-            {
-                formModel = await FileStreamingHelper.StreamFile(Request, stream);
-                // formModel = await Request.StreamFile(stream);
-            }
+            var streamStorage = new LocalStreamStorage(hostingEnv.WebRootPath);
+            formModel = await Request.StreamFile(streamStorage);
+            // formModel = await Request.StreamFile(stream);
 
             var viewModel = new CarModel();
 
