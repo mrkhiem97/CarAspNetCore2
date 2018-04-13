@@ -96,6 +96,11 @@ namespace CarWebApi.HttpHelper.HttpFileUploader
             return formValueProvider;
         }
 
+        /// <summary>
+        /// Get Encoding
+        /// </summary>
+        /// <param name="section"></param>
+        /// <returns></returns>
         private static Encoding GetEncoding(MultipartSection section)
         {
             MediaTypeHeaderValue mediaType;

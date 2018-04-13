@@ -47,11 +47,12 @@ namespace CarWebApi.Controllers
 
         // POST api/values
         [HttpPost]
-        public void Post([FromBody]CarModel model)
+        public JsonResult Post([FromBody]CarModel model)
         {
+            return Json(model);
         }
 
-        // PUT api/values/5
+        // PUT api/values/
         [HttpPut("{id}")]
         public void Put(int id, [FromBody]string value)
         {
