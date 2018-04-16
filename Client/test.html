@@ -8,15 +8,77 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
+	<link href="http://vjs.zencdn.net/6.6.3/video-js.css" rel="stylesheet">
+	<script src="http://vjs.zencdn.net/6.6.3/video.js"></script>
+
 	<script> 
 		// wait for the DOM to be loaded 
 		$(document).ready(function () {
+			var hostUrl = 'localhost:51080';
+
 			$("#mybutton").click(function () {
 				$.get("http://localhost:51080/api/Car", function (data, status) {
 					alert("Data: " + JSON.stringify(data) + "\nStatus: " + status);
 				});
 			});
 
+			var socket;
+			elSocketCreate = $("#btnSocket");
+			elSocketMessage = $("#btnSocketMessage");
+			elSocketClose = $("#btnSocketClose");
+
+			// Web socket
+			elSocketCreate.click(function () {
+				var scheme = document.location.protocol == "https:" ? "wss" : "ws";
+				var port = document.location.port ? (":" + document.location.port) : "";
+				var socketUrl = scheme + "://" + hostUrl + "/ws";
+
+				socket = new WebSocket(socketUrl);
+
+				// Event: Socket opened
+				socket.onopen = event => {
+					console.log(`Socket open at ${socketUrl}`);
+				};
+
+				// Event: Socket closed
+				socket.onclose = event => {
+					console.log('Socket closed');
+				};
+
+				// Event: Socket error
+				socket.onerror = event => {
+					console.error('Socket error');
+				};
+
+				// Event: Socket receive message
+				socket.onmessage = event => {
+					console.log(`Message: ${event.data}`);
+					console.log(event);
+				};
+
+				elSocketCreate[0].disabled = true;
+				elSocketMessage[0].disabled = false;
+				elSocketClose[0].disabled = false;
+				console.info('Socket info:');
+				console.info(socket);
+			});
+
+			// Send message over socket
+			elSocketMessage.click(function () {
+				socket.send(JSON.stringify({ message: '俺のこと、愛してる？' }));
+				// socket.send({ message: '俺のこと、愛してる？' });
+			});
+
+			// Send message over socket
+			elSocketClose.click(function (e) {
+				socket.close();
+
+				elSocketCreate[0].disabled = false;
+				elSocketClose[0].disabled = true;
+				elSocketMessage[0].disabled = true;
+			});
+
+			// Form submit
 			$("#myform").submit(function (e) {
 
 				//prevent Default functionality
@@ -78,9 +140,6 @@
 </head>
 
 <body>
-
-
-
 	<div class="container">
 		<div class="well">
 			<form id="myform" method="post" enctype="multipart/form-data">
@@ -118,7 +177,18 @@
 
 
 	<div id="status"></div>
+	<!-- <video width="400" controls>
+		<source src="http://localhost:51080/api/Car/DownloadFileAsyn?filename=jellyfish-25-mbps-hd-hevc.mp4" type="video/mp4">
+	</video> -->
 
+
+	<video id="my-video" class="video-js" controls preload="metadata" width="640" height="264">
+		<source src="http://localhost:51080/api/Car/PlayVideo?filename=jellyfish-25-mbps-hd-hevc.mp4" type='video/mp4'>
+	</video>
+
+	<button id="btnSocket" type="button" class="btn btn-primary">Create Web Socket</button>
+	<button id="btnSocketMessage" type="button" class="btn btn-primary" disabled>Send socket message</button>
+	<button id="btnSocketClose" type="button" class="btn btn-primary" disabled>Close socket</button>
 </body>
 
 </html>

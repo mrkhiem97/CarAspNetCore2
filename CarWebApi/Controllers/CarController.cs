@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
-using System.Net.Http.Headers;
+using System.Net.Http;
+using System.Net.Mime;
 using System.Threading.Tasks;
 using CarWebApi.AspNetCoreAttribute;
 using CarWebApi.HttpHelper.HttpContent;
@@ -12,6 +14,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Net.Http.Headers;
 using Newtonsoft.Json.Linq;
 
 namespace CarWebApi.Controllers
@@ -133,6 +136,7 @@ namespace CarWebApi.Controllers
                 var filename = ContentDispositionHeaderValue
                                 .Parse(file.ContentDisposition)
                                 .FileName
+                                .Value
                                 .Trim('"');
                 filename = hostingEnv.WebRootPath + $@"\{filename}";
                 size += file.Length;
@@ -150,11 +154,11 @@ namespace CarWebApi.Controllers
         /// Upload large file using Ajax
         /// </summary>
         /// <returns></returns>
-        [HttpPost("UploadLargeFile")]
+        [HttpPost("UploadFileAsync")]
         [DisableFormValueModelBinding]
         [DisableRequestSizeLimit]
         //[RequestSizeLimit(100_000_000_000)]
-        public async Task<IActionResult> UploadLargeFile()
+        public async Task<IActionResult> UploadFileAsync()
         {
             FormValueProvider formModel;
             var streamStorage = new LocalStreamStorage(hostingEnv.WebRootPath);
@@ -182,7 +186,7 @@ namespace CarWebApi.Controllers
         /// <param name="filename"></param>
         /// <returns></returns>
         [HttpGet("Download")]
-        public async Task<FileResult> Download(string filename)
+        public async Task<FileResult> DownloadFile(string filename)
         {
             if (filename == null)
                 return null;
@@ -199,6 +203,48 @@ namespace CarWebApi.Controllers
             memory.Position = 0;
             var httpContentHelper = new HttpContentHelper();
             return File(memory, httpContentHelper.GetContentType(path), Path.GetFileName(path));
+        }
+
+        private static HttpClient Client { get; } = new HttpClient();
+
+        /// <summary>
+        /// Download file async
+        /// </summary>
+        /// <param name="filename"></param>
+        /// <returns></returns>
+        [HttpGet("DownloadFileAsyn")]
+        public async Task DownloadFileAsyn(string filename)
+        {
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", filename);
+            // var stream = new FileStream(path, FileMode.Open);
+            var httpContentHelper = new HttpContentHelper();
+            ContentDisposition cd = new ContentDisposition
+            {
+                FileName = filename,
+                Size = new FileInfo(path).Length,
+                // Inline = displayInline  // false = prompt the user for downloading;  true = browser to try to show the file inline
+            };
+            Response.ContentType = httpContentHelper.GetContentType(path);
+
+            using (var stream = new FileStream(path, FileMode.Open))
+            {
+               await stream.CopyToAsync(Response.Body);
+               stream.Close();
+            }
+        }
+
+
+        [HttpGet("PlayVideo")]
+        public FileResult PlayVideo(string filename)
+        {
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", filename);
+            // var stream = new FileStream(path, FileMode.Open);
+            var httpContentHelper = new HttpContentHelper();
+            //var memory = new MemoryStream();
+            //var stream = new FileStream(path, FileMode.Open);
+            //    await stream.CopyToAsync(memory);
+            //memory.Position = 0;
+            return File(System.IO.File.OpenRead(path), httpContentHelper.GetContentType(path), Path.GetFileName(path));
         }
     }
 }

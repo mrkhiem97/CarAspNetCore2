@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
-using CarWebApi.AspNetCoreAttribute;
+using CarWebApi.AspNetCoreMiddleware;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -61,16 +63,26 @@ namespace CarWebApi
 
             // app.UseCorsMiddleware();
 
+            // Use MVC
             app.UseMvc();
-            //app.UseFileStreamUploadMiddleware();
 
-
-            // Swagger configuration
+            // Use Swagger configuration
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
             });
+
+
+            // Use Web Socket
+            app.UseWebSockets();
+            var webSocketOptions = new WebSocketOptions()
+            {
+                KeepAliveInterval = TimeSpan.FromSeconds(120),
+                ReceiveBufferSize = 4 * 1024
+            };
+            app.UseWebSockets(webSocketOptions);
+            app.UseWebSocketManagerMiddleExtension();
         }
     }
 }
