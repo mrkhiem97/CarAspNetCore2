@@ -65,7 +65,13 @@
 
 			// Send message over socket
 			elSocketMessage.click(function () {
-				socket.send(JSON.stringify({ message: '俺のこと、愛してる？' }));
+				if (webSocket.readyState == WebSocket.OPEN) {
+					socket.send(JSON.stringify({ message: '俺のこと、愛してる？' }));
+				}
+				else {
+					console.error("Connection is closed");
+				}
+				
 				// socket.send({ message: '俺のこと、愛してる？' });
 			});
 
