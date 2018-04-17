@@ -10,6 +10,7 @@ using CarWebApi.AspNetCoreAttribute;
 using CarWebApi.HttpHelper.HttpContent;
 using CarWebApi.HttpHelper.HttpFileUploader;
 using CarWebApi.ViewModel;
+using CarWebApi.WebSocketManager;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -22,11 +23,13 @@ namespace CarWebApi.Controllers
     [Route("api/[controller]")]
     public class CarController : Controller
     {
-        private IHostingEnvironment hostingEnv;
+        private IHostingEnvironment _hostingEnv;
+        private ChatMessageHandler _chatMessageHandler { get; set; }
 
-        public CarController(IHostingEnvironment env)
+        public CarController(IHostingEnvironment env, ChatMessageHandler chatMessageHandler)
         {
-            this.hostingEnv = env;
+            this._hostingEnv = env;
+            this._chatMessageHandler = chatMessageHandler;
         }
 
         // GET api/car
@@ -138,7 +141,7 @@ namespace CarWebApi.Controllers
                                 .FileName
                                 .Value
                                 .Trim('"');
-                filename = hostingEnv.WebRootPath + $@"\{filename}";
+                filename = _hostingEnv.WebRootPath + $@"\{filename}";
                 size += file.Length;
                 using (FileStream fs = System.IO.File.Create(filename))
                 {
@@ -161,7 +164,7 @@ namespace CarWebApi.Controllers
         public async Task<IActionResult> UploadFileAsync()
         {
             FormValueProvider formModel;
-            var streamStorage = new LocalStreamStorage(hostingEnv.WebRootPath);
+            var streamStorage = new LocalStreamStorage(_hostingEnv.WebRootPath);
             formModel = await Request.StreamFile(streamStorage);
             // formModel = await Request.StreamFile(stream);
 
@@ -228,8 +231,8 @@ namespace CarWebApi.Controllers
 
             using (var stream = new FileStream(path, FileMode.Open))
             {
-               await stream.CopyToAsync(Response.Body);
-               stream.Close();
+                await stream.CopyToAsync(Response.Body);
+                stream.Close();
             }
         }
 
@@ -245,6 +248,12 @@ namespace CarWebApi.Controllers
             //    await stream.CopyToAsync(memory);
             //memory.Position = 0;
             return File(System.IO.File.OpenRead(path), httpContentHelper.GetContentType(path), Path.GetFileName(path));
+        }
+
+        [HttpGet("SendNotification")]
+        public async Task SendMessage([FromQueryAttribute]string message)
+        {
+            await _chatMessageHandler.SendMessageToAllAsync(message);
         }
     }
 }

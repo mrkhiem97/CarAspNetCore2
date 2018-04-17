@@ -23,15 +23,18 @@
 			});
 
 			var socket;
-			elSocketCreate = $("#btnSocket");
-			elSocketMessage = $("#btnSocketMessage");
-			elSocketClose = $("#btnSocketClose");
-
+			var elSocketCreate = $("#btnSocket");
+			var elSocketMessage = $("#btnSocketMessage");
+			var elSocketClose = $("#btnSocketClose");
+			var elChatContent = $('#chatContent');
 			// Web socket
 			elSocketCreate.click(function () {
 				var scheme = document.location.protocol == "https:" ? "wss" : "ws";
 				var port = document.location.port ? (":" + document.location.port) : "";
-				var socketUrl = scheme + "://" + hostUrl + "/ws";
+
+
+				var userId = $("#userId").val();
+				var socketUrl = scheme + "://" + hostUrl + "/ws/" + userId;
 
 				socket = new WebSocket(socketUrl);
 
@@ -52,6 +55,10 @@
 
 				// Event: Socket receive message
 				socket.onmessage = event => {
+					var strContent = elChatContent.val() + '\n' + event.data;
+					elChatContent.val(strContent);
+					elChatContent.scrollTop(elChatContent[0].scrollHeight);
+					
 					console.log(`Message: ${event.data}`);
 					console.log(event);
 				};
@@ -65,13 +72,15 @@
 
 			// Send message over socket
 			elSocketMessage.click(function () {
-				if (webSocket.readyState == WebSocket.OPEN) {
-					socket.send(JSON.stringify({ message: '俺のこと、愛してる？' }));
+				if (socket.readyState == WebSocket.OPEN) {
+					elMessage = $('#message');
+					socket.send(JSON.stringify({ message: elMessage.val() }));
+					elMessage.val('');
 				}
 				else {
 					console.error("Connection is closed");
 				}
-				
+
 				// socket.send({ message: '俺のこと、愛してる？' });
 			});
 
@@ -107,7 +116,7 @@
 				//do your own request an handle the results
 				$.ajax({
 					//url: "http://localhost:51080/api/Car/UploadSmallFilesAjax",
-					url: "http://localhost:51080/api/Car/UploadLargeFile",
+					url: "http://localhost:51080/api/Car/UploadFileAsync",
 					type: "POST",
 					data: data,
 					contentType: false,
@@ -147,10 +156,9 @@
 
 <body>
 	<div class="container">
-		<div class="well">
+		<div class="">
 			<form id="myform" method="post" enctype="multipart/form-data">
-				<div>
-					<p>Upload one or more files using this form:</p>
+				<div class="form-group">
 					<label>Model Id</label>
 					<input type="text" name="modelid" value="123456" />
 
@@ -160,41 +168,72 @@
 					<label>Model Version</label>
 					<input type="text" name="version" value="7654" />
 
-					<span class="btn btn-file btn-warning">
-						Upload
-						<input type="file" name="files" id="myfile" multiple />
-					</span>
+					<div class="form-group">
+						<label for="exampleFormControlFile1">Upload large file:</label>
+						<input type="file" class="form-control-file" id="myfile" multiple>
+					</div>
 				</div>
-				<div>
-					<input type="submit" value="Upload" class="btn btn-default" />
-					<button id="mybutton" type="button" class="btn btn-primary">Test API</button>
+				<div class="form-group row">
+					<div class="form-group col-lg-3">
+						<input type="submit" value="Upload" class="btn btn-sm btn-default" />
+						<button id="mybutton" type="button" class="btn btn-sm btn-primary">Test API</button>
+					</div>
+					<div class="form-group col-lg-9">
+						<div class="progress">
+							<div id="percent" class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="0" aria-valuemin="0"
+							 aria-valuemax="100" style="width:25%">
+								70%
+							</div>
+						</div>
+					</div>
 				</div>
 			</form>
 		</div>
-		<div class="well">
-			<div class="progress">
-				<div id="percent" class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="0" aria-valuemin="0"
-				 aria-valuemax="100" style="width:0%">
-					70%
+
+
+
+		<div id="status"></div>
+		<!-- <video width="400" controls>
+			<source src="http://localhost:51080/api/Car/DownloadFileAsyn?filename=jellyfish-25-mbps-hd-hevc.mp4" type="video/mp4">
+		</video> -->
+
+
+		<video id="my-video" class="video-js" controls preload="metadata" width="640" height="264">
+			<source src="http://localhost:51080/api/Car/PlayVideo?filename=jellyfish-25-mbps-hd-hevc.mp4" type='video/mp4'>
+		</video>
+
+		<div style="width: 45%;">
+			<form class="form-horizontal">
+				<div class="form-group">
+					<label class="control-label col-sm-2">User Id: </label>
+					<div class="col-sm-10">
+						<input type="text" id="userId" name="userId" class="form-control input-sm" value="KhiemDM123456" />
+					</div>
 				</div>
-			</div>
+				<div class="form-group">
+					<label class="control-label col-sm-2">Message: </label>
+					<div class="col-sm-10">
+						<input type="text" id="message" name="message" class="form-control input-sm" value="予約ステータス(0:注文待ち、1:自動注文済み、2:手動注文済み、3:注文キャンセル)"
+						/>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="chatMessages" class="control-label col-sm-2">Chat content:</label>
+					<div class="col-sm-10">
+						<textarea class="form-control input-sm" id="chatContent" rows="5">
+						</textarea>
+					</div>
+				</div>
+				<div class="form-group">
+					<button id="btnSocket" type="button" class="btn btn-sm btn-primary">Create Web Socket</button>
+					<button id="btnSocketClose" type="button" class="btn btn-sm btn-primary" disabled>Close socket</button>
+				</div>
+				<div class="form-group">
+					<button id="btnSocketMessage" type="button" class="btn btn-sm btn-primary" disabled>Send socket message</button>
+				</div>
+			</form>
 		</div>
 	</div>
-
-
-	<div id="status"></div>
-	<!-- <video width="400" controls>
-		<source src="http://localhost:51080/api/Car/DownloadFileAsyn?filename=jellyfish-25-mbps-hd-hevc.mp4" type="video/mp4">
-	</video> -->
-
-
-	<video id="my-video" class="video-js" controls preload="metadata" width="640" height="264">
-		<source src="http://localhost:51080/api/Car/PlayVideo?filename=jellyfish-25-mbps-hd-hevc.mp4" type='video/mp4'>
-	</video>
-
-	<button id="btnSocket" type="button" class="btn btn-primary">Create Web Socket</button>
-	<button id="btnSocketMessage" type="button" class="btn btn-primary" disabled>Send socket message</button>
-	<button id="btnSocketClose" type="button" class="btn btn-primary" disabled>Close socket</button>
 </body>
 
 </html>

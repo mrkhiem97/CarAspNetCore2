@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CarWebApi.AspNetCoreMiddleware;
+using CarWebApi.WebSocketManager;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -42,16 +43,20 @@ namespace CarWebApi
             });
 
             services.AddMvc();
+
+            // Web Socket
+            services.AddWebSocketManager();
+
             services.AddSingleton<IFileProvider>(new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot")));
 
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new Info { Title = "My API", Version = "v1" });
+                c.SwaggerDoc("v1", new Info { Title = "Cars API", Version = "v1" });
             });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, IServiceProvider serviceProvider)
         {
             if (env.IsDevelopment())
             {
@@ -60,8 +65,6 @@ namespace CarWebApi
 
             // global policy - assign here or on each controller
             app.UseCors("CorsPolicy");
-
-            // app.UseCorsMiddleware();
 
             // Use MVC
             app.UseMvc();
@@ -82,7 +85,7 @@ namespace CarWebApi
                 ReceiveBufferSize = 4 * 1024
             };
             app.UseWebSockets(webSocketOptions);
-            app.UseWebSocketManagerMiddleExtension();
+            app.MapWebSocketManager("/ws", serviceProvider.GetService<ChatMessageHandler>());
         }
     }
 }
