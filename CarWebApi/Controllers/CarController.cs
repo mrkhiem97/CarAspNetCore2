@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Net.Mime;
 using System.Threading.Tasks;
 using CarWebApi.AspNetCoreAttribute;
+using CarWebApi.HttpHelper.ActionResultExtension;
 using CarWebApi.HttpHelper.HttpContent;
 using CarWebApi.HttpHelper.HttpFileUploader;
 using CarWebApi.ViewModel;
@@ -188,27 +189,26 @@ namespace CarWebApi.Controllers
         /// </summary>
         /// <param name="filename"></param>
         /// <returns></returns>
-        [HttpGet("Download")]
+        [HttpGet("DownloadFile")]
         public async Task<FileResult> DownloadFile(string filename)
         {
-            if (filename == null)
+            if (string.IsNullOrEmpty(filename))
+            {
                 return null;
+            }
 
-            var path = Path.Combine(
-                           Directory.GetCurrentDirectory(),
-                           "wwwroot", filename);
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", filename);
 
             var memory = new MemoryStream();
-            using (var stream = new FileStream(path, FileMode.Open))
+            using (var stream = new FileInfo(path).OpenRead())
             {
                 await stream.CopyToAsync(memory);
+                stream.Close();
             }
             memory.Position = 0;
             var httpContentHelper = new HttpContentHelper();
             return File(memory, httpContentHelper.GetContentType(path), Path.GetFileName(path));
         }
-
-        private static HttpClient Client { get; } = new HttpClient();
 
         /// <summary>
         /// Download file async
@@ -216,40 +216,34 @@ namespace CarWebApi.Controllers
         /// <param name="filename"></param>
         /// <returns></returns>
         [HttpGet("DownloadFileAsyn")]
-        public async Task DownloadFileAsyn(string filename)
+        public FileStreamResult DownloadFileAsyn(string filename)
         {
             var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", filename);
-            // var stream = new FileStream(path, FileMode.Open);
             var httpContentHelper = new HttpContentHelper();
-            ContentDisposition cd = new ContentDisposition
-            {
-                FileName = filename,
-                Size = new FileInfo(path).Length,
-                // Inline = displayInline  // false = prompt the user for downloading;  true = browser to try to show the file inline
-            };
             Response.ContentType = httpContentHelper.GetContentType(path);
+            var stream = new FileInfo(path).OpenRead();
 
-            using (var stream = new FileStream(path, FileMode.Open))
-            {
-                await stream.CopyToAsync(Response.Body);
-                stream.Close();
-            }
+            return File(stream, httpContentHelper.GetContentType(path), filename);
         }
 
-
-        [HttpGet("PlayVideo")]
-        public FileResult PlayVideo(string filename)
+        /// <summary>
+        /// Play video async support seeking
+        /// </summary>
+        /// <param name="filename"></param>
+        /// <returns></returns>
+        [HttpGet("PlayVideoAsync")]
+        public VideoStreamResult PlayVideoAsync(string filename)
         {
             var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", filename);
-            // var stream = new FileStream(path, FileMode.Open);
             var httpContentHelper = new HttpContentHelper();
-            //var memory = new MemoryStream();
-            //var stream = new FileStream(path, FileMode.Open);
-            //    await stream.CopyToAsync(memory);
-            //memory.Position = 0;
-            return File(System.IO.File.OpenRead(path), httpContentHelper.GetContentType(path), Path.GetFileName(path));
+            return new VideoStreamResult(new FileInfo(path).OpenRead(), httpContentHelper.GetContentType(path));
         }
 
+        /// <summary>
+        /// Send notification over web socket
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
         [HttpGet("SendNotification")]
         public async Task SendMessage([FromQueryAttribute]string message)
         {
