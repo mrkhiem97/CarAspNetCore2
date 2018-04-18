@@ -16,12 +16,19 @@
 		$(document).ready(function () {
 			var hostUrl = 'localhost:51080';
 
+			// Video
+			videojs('my-video', {
+				playbackRates: [0.5, 1, 1.5, 2, 5, 10]
+			});
+
+			// Test API Button
 			$("#mybutton").click(function () {
 				$.get("http://localhost:51080/api/Car", function (data, status) {
 					alert("Data: " + JSON.stringify(data) + "\nStatus: " + status);
 				});
 			});
 
+			// Socket
 			var socket;
 			var elSocketCreate = $("#btnSocket");
 			var elSocketMessage = $("#btnSocketMessage");
@@ -195,7 +202,7 @@
 		<div id="status"></div>
 
 		<div class="col-xs-6">
-			<video id="my-video" class="video-js" controls preload="metadata" width="540" height="264" data-setup='{}'>
+			<video id="my-video" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="metadata" width="540" height="264">
 				<source src="http://localhost:51080/api/Car/PlayVideoAsync?filename=pacific-ocean.mp4" type='video/mp4'>
 			</video>
 		</div>
