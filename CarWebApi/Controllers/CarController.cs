@@ -227,19 +227,6 @@ namespace CarWebApi.Controllers
         }
 
         /// <summary>
-        /// Play video async support seeking
-        /// </summary>
-        /// <param name="filename"></param>
-        /// <returns></returns>
-        [HttpGet("PlayVideoAsync")]
-        public VideoStreamResult PlayVideoAsync(string filename)
-        {
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", filename);
-            var httpContentHelper = new HttpContentHelper();
-            return new VideoStreamResult(new FileInfo(path).OpenRead(), httpContentHelper.GetContentType(path));
-        }
-
-        /// <summary>
         /// Send notification over web socket
         /// </summary>
         /// <param name="message"></param>

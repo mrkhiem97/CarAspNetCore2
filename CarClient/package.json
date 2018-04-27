@@ -8,6 +8,7 @@
     "react": "^16.3.2",
     "react-dom": "^16.3.2",
     "react-scripts": "1.1.4",
+    "uuid": "^3.2.1",
     "video.js": "^6.7.3"
   },
   "scripts": {

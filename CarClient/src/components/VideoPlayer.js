@@ -1,10 +1,12 @@
 import React from 'react';
 import videojs from 'video.js';
 
+import ApiUrl from '../api/ApiUrl';
+
 export default class VideoPlayer extends React.Component {
     componentDidMount() {
         // instantiate Video.js
-        this.player = videojs(this.videoNode, this.props, function onPlayerReady() {
+        this.player = videojs(this.videoNode, this.props.videoJsOption, function onPlayerReady() {
             console.log('onPlayerReady', this)
         });
     }
@@ -14,6 +16,11 @@ export default class VideoPlayer extends React.Component {
         if (this.player) {
             this.player.dispose()
         }
+    }
+
+    componentWillReceiveProps(nextProps) {
+        const videoUrl = `${ApiUrl.videoHost}${nextProps.currentVideo}`;
+        this.player.src(videoUrl);
     }
 
     // wrap the player in a div with a `data-vjs-player` attribute
